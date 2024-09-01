@@ -1,39 +1,100 @@
 #!/bin/bash
 
-# docker buildx create --name cuda --node cuda --use --bootstrap --driver-opt network=docker-local-reg
-# docker buildx create --name main --node bk15 --use --bootstrap --driver-opt network=docker-local-reg
 
+# Report errors and exit if detected
+trap 'echo "Error on line $LINENO: $BASH_COMMAND"; exit 1' ERR
+set -e
+
+source  ~/miniforge3/etc/profile.d/conda.sh
+conda activate base
+
+echo "Conda environment: $(conda info --envs | grep '*' | awk '{print $1}')"
 iso_datetime=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
-docker_dir=$docker_dir
 
-cd $docker_dir/gh-runner
+# Choose a version number ---------------------------------------------------------------------------------
 
-pwd
+# Detect the semantic release version number
+cd $(git rev-parse --show-toplevel)
+semvar_version=$(semantic-release version --print 2>/dev/null)
 
 
-docker buildx build \
-  --add-host registry:172.100.0.100 \
-  --build-arg RUNNER_VERSION='2.319.1' \
-  --build-arg ISO_DATETIME=$iso_datetime \
-  --build-arg CACHEBUST="${CACHEBUST:-$(date +%s)}" \
-  --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:latest \
-  --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:buildcache \
-  --output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:latest \
-	--output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:facsimilab \
-	--output type=docker,name=pranavmishra90/gh-runner-selfhosted:latest \
-	--output type=docker,name=pranavmishra90/gh-runner-selfhosted:facsimilab \
-  . -f facsimilab.dockerfile
+# Go back into the docker directory
+cd docker
 
-docker buildx build \
-  --add-host registry:172.100.0.100 \
-  --build-arg RUNNER_VERSION='2.319.1' \
-  --build-arg ISO_DATETIME=$iso_datetime \
-  --build-arg CACHEBUST="${CACHEBUST:-$(date +%s)}" \
-  --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:buildcache \
-  --output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:ubuntu \
-	--output type=docker,name=pranavmishra90/gh-runner-selfhosted:ubuntu \
-  . -f ubuntu.dockerfile
+# We may read the "image_version.txt" if we cannot get a semantic release version
+version_file="image_version.txt"
+
+if git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "Semantic Release Auto Version: '$semvar_version'"
+
+    if [ -n "$semvar_version" ]; then
+        set_version=$semvar_version
+        echo "$set_version" > "$version_file"
+
+    else
+        if [ -f "$version_file" ]; then
+            set_version=$(<"$version_file" tr -d '[:space:]')
+        else
+            echo "Warning: $version_file not found. Using 'dev' as default."
+            set_version="dev"
+        fi
+    fi
+else
+    echo "Not a Git repository. Using $version_file or 'dev' as default."
+    if [ -f "$version_file" ]; then
+        set_version=$(<"$version_file" tr -d '[:space:]')
+    else
+        echo "Warning: $version_file not found. Using 'dev' as default."
+        set_version="dev"
+    fi
+fi
+
+
+iso_datetime=$(date +"%Y-%m-%dT%H:%M:%S%z")
+echo "building Version: $set_version || Timestamp $iso_datetime"
+
+sleep 10
+
+# Write these values to the env file
+echo "ISO_DATETIME=$iso_datetime" > .env
+echo "IMAGE_VERSION=$facsimilab_version_num" >> .env
+
+# Build and push the base image
+docker compose build --push \
+    --build-arg IMAGE_VERSION=$facsimilab_version_num \
+    --build-arg ISO_DATETIME=$iso_datetime \
+    --build-arg RUNNER_VERSION='2.319.1'
+
+docker push pranavmishra90/gh-runner-selfhosted:ubuntu
+docker push pranavmishra90/gh-runner-selfhosted:facsimilab
+
+
+# docker buildx build \
+#   --add-host registry:172.100.0.100 \
+#   --build-arg RUNNER_VERSION='2.319.1' \
+#   --build-arg ISO_DATETIME=$iso_datetime \
+#   --build-arg CACHEBUST="${CACHEBUST:-$(date +%s)}" \
+#   --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:latest \
+#   --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:buildcache \
+#   --output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:latest \
+#   --output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:facsimilab \
+#   --output type=docker,name=pranavmishra90/gh-runner-selfhosted:latest \
+#   --output type=docker,name=pranavmishra90/gh-runner-selfhosted:facsimilab \
+#   . -f facsimilab.dockerfile
+
+# docker buildx build \
+#   --add-host registry:172.100.0.100 \
+#   --build-arg RUNNER_VERSION='2.319.1' \
+#   --build-arg ISO_DATETIME=$iso_datetime \
+#   --build-arg CACHEBUST="${CACHEBUST:-$(date +%s)}" \
+#   --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:buildcache \
+#   --output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:ubuntu \
+# 	--output type=docker,name=pranavmishra90/gh-runner-selfhosted:ubuntu \
+#   . -f ubuntu.dockerfile
+
+
+
 
 # Play an alert tone in the terminal to mark completion'
 echo -e '\a'

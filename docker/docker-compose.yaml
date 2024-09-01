@@ -1,18 +1,49 @@
 name: GitHub-Runner
 
-networks:
+# networks:
   # registry_default:
   #   name: registry_default
   #   external: true
 
 services:
-  ghrunner:
-    image: pranavmishra90/gh-runner-selfhosted:ubuntu@sha256:e610765ea03e3e5be80b98f98fcd06a487ddbee5df13bc9898aed8da189ddbc6 
-    #registry:5000/gh-runner-selfhosted:latest #pranavmishra90/gh-runner-selfhosted:latest
-    pull_policy: always
-    environment:
-      - GH_TOKEN=$GH_TOKEN
-      - GH_OWNER_REPO=$GH_OWNER_REPO
-      - TZ=America/Chicago
-      - SERVERNAME=$SERVERNAME #$HOSTNAME
-    
+  # ghrunner:
+  #   image: pranavmishra90/gh-runner-selfhosted:ubuntu
+  #   pull_policy: always
+  #   environment:
+  #     - GH_TOKEN=$GH_TOKEN
+  #     - GH_OWNER_REPO=$GH_OWNER_REPO
+  #     - TZ=America/Chicago
+  #     - SERVERNAME=$SERVERNAME #$HOSTNAME
+
+  facsimilab:
+    image: pranavmishra90/gh-runner-selfhosted:facsimilab-v${IMAGE_VERSION}
+    build:
+      dockerfile: facsimilab.dockerfile
+      cache_from:
+        - type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:latest
+        - type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:buildcache
+      extra_hosts:
+        - "registry:172.100.0.100"
+      tags:
+        - pranavmishra90/gh-runner-selfhosted:latest
+        - pranavmishra90/gh-runner-selfhosted:facsimilab-v${IMAGE_VERSION}
+
+  ubuntu:
+    image: pranavmishra90/gh-runner-selfhosted:ubuntu
+    build:
+      dockerfile: ubuntu.dockerfile
+      cache_from:
+        - type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:buildcache
+      extra_hosts:
+        - "registry:172.100.0.100"
+      tags:
+        - pranavmishra90/gh-runner-selfhosted:ubuntu
+        - pranavmishra90/gh-runner-selfhosted:ubuntu-v${IMAGE_VERSION}
+
+x-common-args: &common-args
+  build:
+    context: .
+    args:
+      IMAGE_VERSION:
+      ISO_DATETIME:
+      BUILDKIT_INLINE_CACHE: "1"

@@ -1,5 +1,5 @@
 # base image
-FROM ubuntu:22.04 AS base
+FROM ubuntu:22.04 AS ubuntubase
 
 #input GitHub runner version argument
 ARG RUNNER_VERSION='2.319.1'
@@ -7,11 +7,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # update the base packages + add a non-sudo user
 RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update -y && apt-get upgrade -y  && \
+    apt-get update -y && \
     apt-get install -y --no-install-recommends \
     curl nodejs wget unzip vim git jq build-essential libssl-dev libffi-dev python3 python3-venv python3-dev python3-pip && \
-    curl -sL https://aka.ms/InstallAzureCLIDeb | bash && \
-    useradd -m docker
+    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+# create the docker group and user
+RUN groupadd -g 1050 docker && useradd -u 1050 -g docker -m docker
 
 # cd into the user directory, download and unzip the github actions runner
 RUN --mount=type=cache,target=/var/cache/apt \
@@ -34,13 +36,8 @@ RUN --mount=type=cache,target=/var/cache/apt \
 # install some additional dependencies
 RUN chown -R docker ~docker && /home/docker/actions-runner/bin/installdependencies.sh
 
-FROM base AS final
+FROM ubuntubase AS final
 
-ARG CACHEBUST=1
-RUN echo "Cache breaker: $CACHEBUST" > /dev/null
-
-# get random text
-RUN curl "https://www.random.org/integers/?num=100&min=1&max=100&col=5&base=10&format=plain&rnd=new" > random.txt
 # add over the start.sh script
 ADD scripts/start.sh start.sh
 
@@ -50,8 +47,6 @@ RUN chmod +x start.sh
 # set the user to "docker" so all subsequent commands are run as the docker user
 USER docker
 
-# set the entrypoint to the start.sh script
-ENTRYPOINT ["./start.sh"]
 
 ARG ISO_DATETIME
 LABEL org.opencontainers.image.title="Modified Ubuntu 22.04 Runner"
@@ -62,3 +57,6 @@ LABEL org.opencontainers.image.created=${ISO_DATETIME}
 LABEL org.opencontainers.image.base.name="ubuntu:22.04"
 LABEL version=${RUNNER_VERSION}
 LABEL org.opencontainers.image.version=${RUNNER_VERSION}
+
+# set the entrypoint to the start.sh script
+ENTRYPOINT ["./start.sh"]
