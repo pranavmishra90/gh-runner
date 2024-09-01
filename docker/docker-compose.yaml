@@ -4,7 +4,8 @@ name: GitHub-Runner
   # registry_default:
   #   name: registry_default
   #   external: true
-
+include:
+  - run-docker-compose.yaml
 services:
   # ghrunner:
   #   image: pranavmishra90/gh-runner-selfhosted:ubuntu

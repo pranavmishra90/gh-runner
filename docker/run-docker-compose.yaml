@@ -1,0 +1,27 @@
+name: GitHub-Runner
+
+# networks:
+  # registry_default:
+  #   name: registry_default
+  #   external: true
+
+services:
+  ghrunner:
+    image: pranavmishra90/gh-runner-selfhosted:ubuntu
+    pull_policy: always
+    env_file:
+      - secrets.env
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 20GB
+      reservations:
+        devices:
+          - driver: nvidia
+            capabilities: [gpu]
+    # environment:
+    #   - GH_TOKEN=$GH_TOKEN
+    #   - GH_OWNER_REPO=$GH_OWNER_REPO
+    #   - TZ=America/Chicago
+    #   - SERVERNAME=$SERVERNAME #$HOSTNAME

@@ -61,16 +61,16 @@ echo "ISO_DATETIME=$iso_datetime" > .env
 echo "IMAGE_VERSION=$set_version" >> .env
 
 # Build and push the base image
-docker compose build --push \
+docker compose build facsimilab ubuntu --push \
     --build-arg IMAGE_VERSION=$set_version \
     --build-arg ISO_DATETIME=$iso_datetime \
     --build-arg RUNNER_VERSION='2.319.1'
 
 docker push pranavmishra90/gh-runner-selfhosted:ubuntu
-docker push pranavmishra90/gh-runner-selfhosted:ubuntu-v$set_version
-docker push pranavmishra90/gh-runner-selfhosted:facsimilab
-docker push pranavmishra90/gh-runner-selfhosted:facsimilab-v$set_version
-docker push pranavmishra90/gh-runner-selfhosted:latest
+docker push -q pranavmishra90/gh-runner-selfhosted:ubuntu-v$set_version
+docker push -q pranavmishra90/gh-runner-selfhosted:facsimilab
+docker push -q pranavmishra90/gh-runner-selfhosted:facsimilab-v$set_version
+docker push -q pranavmishra90/gh-runner-selfhosted:latest
 
 
 # Play an alert tone in the terminal to mark completion'
