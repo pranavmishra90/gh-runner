@@ -58,42 +58,19 @@ sleep 10
 
 # Write these values to the env file
 echo "ISO_DATETIME=$iso_datetime" > .env
-echo "IMAGE_VERSION=$facsimilab_version_num" >> .env
+echo "IMAGE_VERSION=$set_version" >> .env
 
 # Build and push the base image
 docker compose build --push \
-    --build-arg IMAGE_VERSION=$facsimilab_version_num \
+    --build-arg IMAGE_VERSION=$set_version \
     --build-arg ISO_DATETIME=$iso_datetime \
     --build-arg RUNNER_VERSION='2.319.1'
 
 docker push pranavmishra90/gh-runner-selfhosted:ubuntu
+docker push pranavmishra90/gh-runner-selfhosted:ubuntu-v$set_version
 docker push pranavmishra90/gh-runner-selfhosted:facsimilab
-
-
-# docker buildx build \
-#   --add-host registry:172.100.0.100 \
-#   --build-arg RUNNER_VERSION='2.319.1' \
-#   --build-arg ISO_DATETIME=$iso_datetime \
-#   --build-arg CACHEBUST="${CACHEBUST:-$(date +%s)}" \
-#   --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:latest \
-#   --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:buildcache \
-#   --output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:latest \
-#   --output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:facsimilab \
-#   --output type=docker,name=pranavmishra90/gh-runner-selfhosted:latest \
-#   --output type=docker,name=pranavmishra90/gh-runner-selfhosted:facsimilab \
-#   . -f facsimilab.dockerfile
-
-# docker buildx build \
-#   --add-host registry:172.100.0.100 \
-#   --build-arg RUNNER_VERSION='2.319.1' \
-#   --build-arg ISO_DATETIME=$iso_datetime \
-#   --build-arg CACHEBUST="${CACHEBUST:-$(date +%s)}" \
-#   --cache-from type=registry,mode=max,oci-mediatypes=true,ref=pranavmishra90/gh-runner-selfhosted:buildcache \
-#   --output type=registry,push=true,name=pranavmishra90/gh-runner-selfhosted:ubuntu \
-# 	--output type=docker,name=pranavmishra90/gh-runner-selfhosted:ubuntu \
-#   . -f ubuntu.dockerfile
-
-
+docker push pranavmishra90/gh-runner-selfhosted:facsimilab-v$set_version
+docker push pranavmishra90/gh-runner-selfhosted:latest
 
 
 # Play an alert tone in the terminal to mark completion'
