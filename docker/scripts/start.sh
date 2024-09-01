@@ -16,7 +16,7 @@ REG_TOKEN=$(curl -sL -X POST -H "Accept: application/vnd.github+json" -H "X-GitH
 
 cd /home/docker/actions-runner
 
-./config.sh --unattended --url https://github.com/$GH_OWNER_REPO --token $REG_TOKEN --name $RUNNER_NAME
+./config.sh --unattended --url https://github.com/$GH_OWNER_REPO --token $REG_TOKEN --name $RUNNER_NAME --labels docker,gpu,limited
 
 cleanup() {
     echo "Removing runner..."
