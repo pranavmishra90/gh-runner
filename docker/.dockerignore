@@ -1,4 +1,4 @@
 *.env
 *.secrets
-docker-compose.yaml
+*docker-compose.yaml
 image_version.txt
