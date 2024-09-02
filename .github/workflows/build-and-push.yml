@@ -1,0 +1,82 @@
+name: Build and Push Version
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-push:
+    runs-on: [self-hosted, linux]
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          show-progress: true
+          set-safe-directory: '/'
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: pranavmishra90
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        name: Setup Python with Pip
+        with:
+          python-version: '3.11'
+      
+      - run: pip install python-semantic-release
+        name: install python-semantic-release
+
+
+      - name: Matrix Message - Starting Build
+        uses: s3krit/matrix-message-action@v0.0.3
+        with:
+            room_id: ${{ secrets.MATRIX_ROOM_ID }}
+            access_token: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+            message: "## GitHub Action: Starting build for GH Runner"
+            server: "matrix.drpranavmishra.com"
+
+      - name: Build Docker images
+        run: bash ./docker/build.sh
+
+      - name: Read the image version
+        id: package
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ./docker/image_version.txt
+
+      - name: Python Semantic Release
+        uses: python-semantic-release/python-semantic-release@v9.8.6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_committer_email: "62562712+pranavmishra90@users.noreply.github.com"
+          ssh_private_signing_key: ${{ secrets.AUTOMATED_SIGNING_KEY }}
+          ssh_public_signing_key: ${{ secrets.AUTOMATED_SIGNING_PUBKEY }}
+
+      - name: Write to workflow job summary
+        run: |
+          build_version=$(cat docker/image_version.txt)
+          builder_header="# $build_version "
+          echo "$builder_header" > .github/job_summary.md
+          cat changelog.md > .github/job_summary.md
+          cat .github/job_summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Matrix Message - Completed GitHub Action
+        uses: s3krit/matrix-message-action@v0.0.3
+        with:
+            room_id: ${{ secrets.MATRIX_ROOM_ID }}
+            access_token: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+            message: "Completed GH Runner build github action for tag ${{ steps.package.outputs.content }}"
+            server: "matrix.drpranavmishra.com"
