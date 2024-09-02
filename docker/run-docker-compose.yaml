@@ -16,10 +16,12 @@ services:
         limits:
           cpus: '2.0'
           memory: 20GB
-      reservations:
-        devices:
-          - driver: nvidia
-            capabilities: [gpu]
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock 
     # environment:
     #   - GH_TOKEN=$GH_TOKEN
     #   - GH_OWNER_REPO=$GH_OWNER_REPO

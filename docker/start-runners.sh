@@ -1,3 +1,3 @@
 #!/bin/bash
 docker compose down
-docker compose up --scale ghrunner=3 -d 
+docker compose -f run-docker-compose.yaml   up -d --scale ghrunner=3
