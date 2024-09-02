@@ -40,13 +40,13 @@ jobs:
         name: install python-semantic-release
 
 
-      - name: Matrix Message - Starting Build
-        uses: s3krit/matrix-message-action@v0.0.3
-        with:
-            room_id: ${{ secrets.MATRIX_ROOM_ID }}
-            access_token: ${{ secrets.MATRIX_ACCESS_TOKEN }}
-            message: "## GitHub Action: Starting build for GH Runner"
-            server: "matrix.drpranavmishra.com"
+      # - name: Matrix Message - Starting Build
+      #   uses: s3krit/matrix-message-action@v0.0.3
+      #   with:
+      #       room_id: ${{ secrets.MATRIX_ROOM_ID }}
+      #       access_token: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      #       message: "## GitHub Action: Starting build for GH Runner"
+      #       server: "matrix.drpranavmishra.com"
 
       - name: Build Docker images
         run: bash ./docker/build.sh
@@ -73,10 +73,10 @@ jobs:
           cat changelog.md > .github/job_summary.md
           cat .github/job_summary.md >> $GITHUB_STEP_SUMMARY
 
-      - name: Matrix Message - Completed GitHub Action
-        uses: s3krit/matrix-message-action@v0.0.3
-        with:
-            room_id: ${{ secrets.MATRIX_ROOM_ID }}
-            access_token: ${{ secrets.MATRIX_ACCESS_TOKEN }}
-            message: "Completed GH Runner build github action for tag ${{ steps.package.outputs.content }}"
-            server: "matrix.drpranavmishra.com"
+      # - name: Matrix Message - Completed GitHub Action
+      #   uses: s3krit/matrix-message-action@v0.0.3
+      #   with:
+      #       room_id: ${{ secrets.MATRIX_ROOM_ID }}
+      #       access_token: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      #       message: "Completed GH Runner build github action for tag ${{ steps.package.outputs.content }}"
+      #       server: "matrix.drpranavmishra.com"
