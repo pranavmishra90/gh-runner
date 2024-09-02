@@ -21,6 +21,9 @@ cd /home/docker/actions-runner
 cleanup() {
     echo "Removing runner..."
     ./config.sh remove --unattended --token $REG_TOKEN
+
+    # Delete the runner from the GitHub organization
+    curl -X DELETE -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/orgs/$GH_OWNER_REPO/actions/runners/$RUNNER_NAME"
 }
 
 trap 'cleanup; exit 130' INT
