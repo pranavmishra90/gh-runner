@@ -5,10 +5,13 @@
 trap 'echo "Error on line $LINENO: $BASH_COMMAND"; exit 1' ERR
 set -e
 
-source  ~/miniforge3/etc/profile.d/conda.sh
-conda activate base
+if [ -f ~/miniforge3/etc/profile.d/conda.sh ]; then
+    source ~/miniforge3/etc/profile.d/conda.sh
+    conda activate base
+    echo "Conda environment: $(conda info --envs | grep '*' | awk '{print $1}')"
+fi
 
-echo "Conda environment: $(conda info --envs | grep '*' | awk '{print $1}')"
+
 iso_datetime=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
 
